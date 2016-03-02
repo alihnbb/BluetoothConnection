@@ -51,6 +51,16 @@ public class MainActivity extends AppCompatActivity {
 
             if(bluetoothAdapter != null) {
 
+                if(bluetoothAdapter.isEnabled()) {
+
+                    bluetoothOnOff.setChecked(true);
+
+                } else {
+
+                    bluetoothOnOff.setChecked(false);
+
+                }
+
                 bluetoothOnOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -60,11 +70,14 @@ public class MainActivity extends AppCompatActivity {
                         if (isChecked) {
                             //give a permission from AndroidManifest.xml file
 
-                            turnOnOffIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                            startActivity(turnOnOffIntent);
+                            if(!bluetoothAdapter.isEnabled()) {
 
-                            Toast.makeText(getApplicationContext(), "Bluetooth is turning on!", Toast.LENGTH_LONG).show();
-                            makeVisibleButton.setEnabled(true);
+                                turnOnOffIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                startActivity(turnOnOffIntent);
+
+                                Toast.makeText(getApplicationContext(), "Bluetooth is turning on!", Toast.LENGTH_LONG).show();
+                                makeVisibleButton.setEnabled(true);
+                            }
 
                         } else {
 
