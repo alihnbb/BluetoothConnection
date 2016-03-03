@@ -1,34 +1,62 @@
 package tr.com.soto.bluetoothconnection;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
     private Switch bluetoothOnOff;
-    private Button makeVisibleButton;
+    private Button scanButton;
     private CheckBox cbMakeVisible;
     private BluetoothAdapter bluetoothAdapter;
+    private ListView btListView;
+    private static final int BT_REQUEST_ENABLE = 1;
+    private ArrayList<String> pairedDevicesList;
+    private ArrayAdapter arrayAdapter;
 
-    public void makeVisible(View view) {
+    public void scanForPairedDevices(View view) {
 
-        Toast toast = Toast.makeText(getApplicationContext(), "Searching Peripherals", Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(getApplicationContext(), "Querying paired devices...", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0);
         toast.show();
 
+        pairedDevicesList = new ArrayList<String>();
+        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDevicesList);
+
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+
+            for(BluetoothDevice device : pairedDevices) {
+                pairedDevicesList.add(device.getName() + "\n" + device.getAddress());
+                btListView.setAdapter(arrayAdapter);
+                btListView.refreshDrawableState();
+
+            }
+        }
     }
 
     @Override
@@ -39,98 +67,83 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         bluetoothOnOff = (Switch) findViewById(R.id.btSwitch);
-        makeVisibleButton = (Button) findViewById(R.id.makeVisibleButton);
+        scanButton = (Button) findViewById(R.id.scanButton);
         cbMakeVisible = (CheckBox) findViewById(R.id.cbMakeVisible);
+        btListView = (ListView) findViewById(R.id.btListView);
 
-        PackageManager packageManager = getBaseContext().getPackageManager();
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        if(packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
-                || packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+        if(bluetoothAdapter != null) {
 
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            if(bluetoothAdapter.isEnabled()) {
 
-            if(bluetoothAdapter != null) {
-
-                if(bluetoothAdapter.isEnabled()) {
-
-                    bluetoothOnOff.setChecked(true);
-
-                } else {
-
-                    bluetoothOnOff.setChecked(false);
-
-                }
-
-                bluetoothOnOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                        Intent turnOnOffIntent = null;
-
-                        if (isChecked) {
-                            //give a permission from AndroidManifest.xml file
-
-                            if(!bluetoothAdapter.isEnabled()) {
-
-                                turnOnOffIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                                startActivity(turnOnOffIntent);
-
-                                Toast.makeText(getApplicationContext(), "Bluetooth is turning on!", Toast.LENGTH_LONG).show();
-                                makeVisibleButton.setEnabled(true);
-                            }
-
-                        } else {
-
-                            if (bluetoothAdapter.disable()) {
-
-                                if (bluetoothAdapter.isEnabled()) {
-
-                                    Toast.makeText(getApplicationContext(), "Bluetooth couldn't be disabled!", Toast.LENGTH_LONG).show();
-
-                                } else {
-
-                                    Toast.makeText(getApplicationContext(), "Bluetooth is turned off sucessfully!", Toast.LENGTH_LONG).show();
-                                    makeVisibleButton.setEnabled(false);
-
-                                }
-                            }
-                        }
-                    }
-                });
-
-                cbMakeVisible.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
-
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                        Intent intent = null;
-                        if(isChecked) {
-
-                            if(!bluetoothAdapter.isDiscovering()) {
-
-                                intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-
-                            }
-
-                        } else {
-
-                            //TODO: cancel discovering
-
-                        }
-
-                        startActivity(intent);
-
-                    }
-                });
+                bluetoothOnOff.setChecked(true);
+                scanButton.setEnabled(true);
 
             } else {
 
-                Toast.makeText(getApplicationContext(), "Bluetooth crashed!", Toast.LENGTH_SHORT).show();
+                bluetoothOnOff.setChecked(false);
+                scanButton.setEnabled(false);
 
             }
+
+            bluetoothOnOff.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                    if (isChecked) {
+
+                        //give a permission from AndroidManifest.xml file
+                        //BLUETOOTH permission for use Bluetooth features.
+                        //BLUETOOTH_ADMIN permission for initiate device discovery or manipulate Bluetooth settings.
+                        if(!bluetoothAdapter.isEnabled()) {
+
+                            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                            startActivityForResult(enableBTIntent, BT_REQUEST_ENABLE);
+
+                            Toast.makeText(getApplicationContext(), "Bluetooth is turning on!", Toast.LENGTH_LONG).show();
+                            scanButton.setEnabled(true);
+                        }
+
+                    } else {
+
+                        if (bluetoothAdapter.disable()) {
+
+                            if (bluetoothAdapter.isEnabled()) {
+
+                                Toast.makeText(getApplicationContext(), "Bluetooth couldn't be disabled!", Toast.LENGTH_LONG).show();
+
+                            } else {
+
+                                Toast.makeText(getApplicationContext(), "Bluetooth is turned off sucessfully!", Toast.LENGTH_LONG).show();
+                                scanButton.setEnabled(false);
+
+                            }
+                        }
+                    }
+                }
+            });
+
+            cbMakeVisible.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                    if (isChecked) {
+
+                        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                        startActivity(intent);
+
+                    } else {
+
+                        //TODO: cancel discovering
+                    }
+                }
+            });
+
         } else {
 
-            Toast.makeText(getApplicationContext(), "Device can not support Bluetooth!", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "The Device does not support Bluetooth!", Toast.LENGTH_SHORT).show();
 
         }
     }
