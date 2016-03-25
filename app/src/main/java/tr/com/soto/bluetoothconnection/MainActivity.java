@@ -2,15 +2,10 @@ package tr.com.soto.bluetoothconnection;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothProfile;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
@@ -24,7 +19,6 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int BT_REQUEST_ENABLE = 1;
     private ArrayList<String> pairedDevicesList;
     private ArrayAdapter arrayAdapter;
+    private int osVersion = BuildConfig.VERSION_CODE;
 
     public void scanForPairedDevices(View view) {
 
@@ -56,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
                 btListView.refreshDrawableState();
 
             }
+
+        } else {
+
+            Toast.makeText(getApplicationContext(), "No paired device found!", Toast.LENGTH_SHORT);
+
         }
     }
 
@@ -71,7 +71,20 @@ public class MainActivity extends AppCompatActivity {
         cbMakeVisible = (CheckBox) findViewById(R.id.cbMakeVisible);
         btListView = (ListView) findViewById(R.id.btListView);
 
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        /*
+            when running on JELLY_BEAN_MR1 and below, call the static getDefaultAdapter() method;
+            when running on JELLY_BEAN_MR2 and higher, retrieve it through getSystemService(Class)
+            with BLUETOOTH_SERVICE.
+        */
+        if(osVersion > 17) {
+
+            bluetoothAdapter = (BluetoothAdapter)getSystemService(BLUETOOTH_SERVICE);
+
+        } else if(osVersion <= 17) {
+
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        }
 
         if(bluetoothAdapter != null) {
 
@@ -146,6 +159,11 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "The Device does not support Bluetooth!", Toast.LENGTH_SHORT).show();
 
         }
+    }
+
+    private void searchForLEDevice() {
+        
+
     }
 
     @Override
