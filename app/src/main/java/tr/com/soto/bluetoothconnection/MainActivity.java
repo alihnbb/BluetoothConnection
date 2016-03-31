@@ -2,10 +2,14 @@ package tr.com.soto.bluetoothconnection;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
@@ -29,35 +33,10 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter bluetoothAdapter;
     private ListView btListView;
     private static final int BT_REQUEST_ENABLE = 1;
-    private ArrayList<String> pairedDevicesList;
+    private int btResultCode;
+    private ArrayList<String> devicesList;
     private ArrayAdapter arrayAdapter;
     private int osVersion = BuildConfig.VERSION_CODE;
-
-    public void scanForPairedDevices(View view) {
-
-        Toast toast = Toast.makeText(getApplicationContext(), "Querying paired devices...", Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0);
-        toast.show();
-
-        pairedDevicesList = new ArrayList<String>();
-        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, pairedDevicesList);
-
-        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-
-            for(BluetoothDevice device : pairedDevices) {
-                pairedDevicesList.add(device.getName() + "\n" + device.getAddress());
-                btListView.setAdapter(arrayAdapter);
-                btListView.refreshDrawableState();
-
-            }
-
-        } else {
-
-            Toast.makeText(getApplicationContext(), "No paired device found!", Toast.LENGTH_SHORT);
-
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
             when running on JELLY_BEAN_MR2 and higher, retrieve it through getSystemService(Class)
             with BLUETOOTH_SERVICE.
         */
+        Log.i("ANDROID OS VERSION", String.valueOf(osVersion));
         if(osVersion > 17) {
 
             bluetoothAdapter = (BluetoothAdapter)getSystemService(BLUETOOTH_SERVICE);
@@ -104,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
+                    btListView.setAdapter(null);
+
                     if (isChecked) {
 
                         //give a permission from AndroidManifest.xml file
@@ -113,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
 
                             Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                             startActivityForResult(enableBTIntent, BT_REQUEST_ENABLE);
+                            onActivityResult(BT_REQUEST_ENABLE, btResultCode, enableBTIntent);
+
+                            Log.i("BT PROCESS RESULT CODE", String.valueOf(btResultCode));
 
                             Toast.makeText(getApplicationContext(), "Bluetooth is turning on!", Toast.LENGTH_LONG).show();
                             scanButton.setEnabled(true);
@@ -124,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
                             if (bluetoothAdapter.isEnabled()) {
 
-                                Toast.makeText(getApplicationContext(), "Bluetooth couldn't be disabled!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Bluetooth couldn't be disabled, try again!", Toast.LENGTH_LONG).show();
 
                             } else {
 
@@ -161,8 +146,64 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void scanForPairedDevices(View view) {
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        if (pairedDevices.size() > 0) {
+
+            for(BluetoothDevice device : pairedDevices) {
+                devicesList.add(device.getName() + "\n" + device.getAddress() + "(paired)");
+                btListView.setAdapter(arrayAdapter);
+                btListView.refreshDrawableState();
+
+            }
+
+        } else {
+
+            Toast.makeText(getApplicationContext(), "No paired device found!", Toast.LENGTH_SHORT);
+
+        }
+    }
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
+        //When finding a device
+        if(BluetoothDevice.ACTION_FOUND.equals(action)) {
+            //Get the BluetoothDevice object from intent
+            BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            devicesList.add(btDevice.getName() + "\n" + btDevice.getAddress());
+            btListView.setAdapter(arrayAdapter);
+            btListView.refreshDrawableState();
+        }
+        }
+    };
+
+    public void searchForDevices(View view) {
+
+        if(bluetoothAdapter.isDiscovering()) {
+
+            bluetoothAdapter.cancelDiscovery();
+
+        }
+        btListView.setAdapter(null);
+
+        Toast toast = Toast.makeText(getApplicationContext(), "Searching for devices...", Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0);
+        toast.show();
+
+        devicesList = new ArrayList<String>();
+        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, devicesList);
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(mReceiver, filter);
+        bluetoothAdapter.startDiscovery();
+
+    }
+
     private void searchForLEDevice() {
-        
+
+        //TODO: coding for LE
 
     }
 
@@ -186,5 +227,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(mReceiver);
+        super.onDestroy();
     }
 }

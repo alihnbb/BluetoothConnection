@@ -22,7 +22,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentEnd="true"
         android:layout_marginBottom="40dp"
-        android:onClick="scanForPairedDevices"
+        android:onClick="searchForDevices"
         android:enabled="false" />
 
     <TextView
