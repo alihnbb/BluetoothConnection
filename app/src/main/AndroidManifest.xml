@@ -21,15 +21,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".PairedListActivity"
-            android:label="@string/title_activity_paired_list"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="tr.com.soto.bluetoothconnection.MainActivity" />
-        </activity>
     </application>
 
 </manifest>
