@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> devicesList;
     private ArrayList<BluetoothDevice> btDeviceList;
     private ArrayAdapter arrayAdapter;
-    private int osVersion = BuildConfig.VERSION_CODE;
+    private int osVersion = Build.VERSION.SDK_INT;
     private final static String uuid = "f4798eca-54ed-49b7-8b12-925b1084aa5a";
 
     @Override
