@@ -32,23 +32,19 @@ public class MainActivity extends AppCompatActivity {
 
     private Switch bluetoothOnOff;
     private Button scanButton;
-    //private Button pairedButton;
     private Button openSocketButton;
     private CheckBox cbMakeVisible;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice bluetoothDevice;
     private ListView btListView;
     private ProgressBar socketProgress;
-    private static final int BT_REQUEST_ENABLE = 12;
+    private static final int BT_REQUEST_ENABLE = 1;
     private static final int BT_VISIBLE_ENABLE = 13;
     private static final int BONDED_DEVICE = 12;
     private boolean isPaired = false;
-    private int btResultCode = -1;
     private ArrayList<String> devicesList;
     private ArrayList<BluetoothDevice> btDeviceList;
     private ArrayAdapter arrayAdapter;
-    private int osVersion = Build.VERSION.SDK_INT;
-    private final static String uuid = "f4798eca-54ed-49b7-8b12-925b1084aa5a";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
 
         bluetoothOnOff = (Switch) findViewById(R.id.btSwitch);
         scanButton = (Button) findViewById(R.id.scanButton);
-        //pairedButton = (Button) findViewById(R.id.pairedButton);
         openSocketButton = (Button) findViewById(R.id.openSocketButton);
         cbMakeVisible = (CheckBox) findViewById(R.id.cbMakeVisible);
         btListView = (ListView) findViewById(R.id.btListView);
@@ -70,19 +65,7 @@ public class MainActivity extends AppCompatActivity {
             when running on JELLY_BEAN_MR2 and higher, retrieve it through getSystemService(Class)
             with BLUETOOTH_SERVICE.
         */
-        Log.i("BluetoothDevice", String.valueOf(osVersion));
-        if(osVersion > 17) {
-
-            bluetoothAdapter = (BluetoothAdapter)getSystemService(BLUETOOTH_SERVICE);
-
-        } else if(osVersion <= 17) {
-
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        }
-
-
-
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         if(bluetoothAdapter != null) {
 
@@ -90,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
 
                 bluetoothOnOff.setChecked(true);
                 scanButton.setEnabled(true);
-                //pairedButton.setEnabled(true);
                 openSocketButton.setEnabled(true);
                 cbMakeVisible.setEnabled(true);
 
@@ -98,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
 
                 bluetoothOnOff.setChecked(false);
                 scanButton.setEnabled(false);
-                //pairedButton.setEnabled(false);
                 openSocketButton.setEnabled(false);
                 cbMakeVisible.setEnabled(false);
 
@@ -125,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
 
                             Toast.makeText(getApplicationContext(), "Bluetooth is turning on!", Toast.LENGTH_LONG).show();
                             scanButton.setEnabled(true);
-                            //pairedButton.setEnabled(true);
                             openSocketButton.setEnabled(true);
                             cbMakeVisible.setEnabled(true);
 
@@ -142,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
 
                             Toast.makeText(getApplicationContext(), "Bluetooth is turned off sucessfully!", Toast.LENGTH_LONG).show();
                             scanButton.setEnabled(false);
-                            //pairedButton.setEnabled(false);
                             openSocketButton.setEnabled(false);
                             cbMakeVisible.setEnabled(false);
 
@@ -169,9 +148,6 @@ public class MainActivity extends AppCompatActivity {
                     //discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
                     startActivityForResult(discoverableIntent, BT_VISIBLE_ENABLE);
 
-                } else {
-
-                    //TODO: cancel discovering
                 }
                 }
             });
@@ -192,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
             if(BluetoothDevice.ACTION_FOUND.equals(action)) {
 
                 String deviceInfo = "";
-                Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+                Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
 
                 //Get the BluetoothDevice object from intent
                 BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -238,9 +214,7 @@ public class MainActivity extends AppCompatActivity {
         }
         btListView.setAdapter(null);
 
-        /*Toast toast = */Toast.makeText(getApplicationContext(), "Searching for devices...", Toast.LENGTH_LONG).show();
-        //toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0);
-        //toast.show();
+        Toast.makeText(getApplicationContext(), "Searching for devices...", Toast.LENGTH_LONG).show();
 
         devicesList = new ArrayList<String>();
         btDeviceList = new ArrayList<BluetoothDevice>();
@@ -265,8 +239,6 @@ public class MainActivity extends AppCompatActivity {
                 Thread clientThread = new ClientBTConnection(bluetoothDevice);
                 clientThread.run();
                 Log.d("BluetoothDevice", "Client connection started!");
-
-
 
             }
             }
