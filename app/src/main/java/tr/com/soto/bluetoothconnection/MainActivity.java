@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int BT_REQUEST_ENABLE = 1;
     private static final int BT_VISIBLE_ENABLE = 13;
     private static final int BONDED_DEVICE = 12;
+    private static final int DISCOVERABILITY_DURATION = 300;
     private boolean isPaired = false;
     private ArrayList<String> devicesList;
     private ArrayList<BluetoothDevice> btDeviceList;
@@ -145,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
                     //default discoverable duration 120 seconds
                     //specific duration can be defined
-                    //discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+                    discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, DISCOVERABILITY_DURATION);
                     startActivityForResult(discoverableIntent, BT_VISIBLE_ENABLE);
 
                 }
@@ -255,13 +256,24 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.i("Bluetooth Status", "Status: Enabled");
 
-            } else {
+            }  else if (requestCode == BT_VISIBLE_ENABLE) {
+
+                if(resultCode == DISCOVERABILITY_DURATION) {
+
+                    Log.i("Bluetooth Status", "Status: Discoverable Mode: On");
+
+                } else {
+
+                    Log.e("Bluetooth Status", "Fail to enable discoverability on the device!");
+
+                }
+
+            }  else {
 
                 Log.i("Bluetooth Status", "Status: Disabled");
                 bluetoothOnOff.setChecked(false);
 
             }
-
         }
     }
 
